@@ -1,0 +1,71 @@
+<html>		
+	<head>
+		<title>вычисление факториала</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<script>
+			//чтобы каждый раз не вычислять
+			var faktor = [1];
+			for(var i = 1; i < 10; i++) {
+				faktor[i] = faktor[i-1] * i;
+			}
+			console.log(faktor);
+			console.time('test');
+
+			//функция для определения следущего числа, которое может подойди по условие задачи
+			function nextRoundNumb(num, pos) {
+				var tmp = 10;
+				for(var i = 1; i < pos; i++) {
+					tmp *= 10;
+				}
+				return (Math.floor(num / tmp) + 1) * tmp
+			}
+
+			var lastSumm = 0;
+			var arLastSumm = new Array();
+			var stat = 0;
+
+			//2545160 - из википедии взято
+			for(var i = 1; i < 2545160; i++) {
+				var lastDigit = i % 10
+				var sum = 0;
+				var next = false;
+				stat++;
+				
+				//запомним для десятка сумму, чтобы не вычислять каждый раз
+				if(lastDigit == 0) {
+					var num = i;
+					var digit = 1;
+					while(num > 0) {        
+						sum += faktor[num % 10];            
+						num = Math.floor(num / 10);
+						if(sum > i) {   //если уже точно перебор - ищем следущее число, которое может подойти             
+							i = nextRoundNumb(i, digit) - 1; 
+							next = true;
+							break;
+						}
+						digit++;
+					}
+					lastSumm = sum - 1;
+				}
+				else//просто прибавим к сохранненому десятку, чтобы уменьшить количество вычислений
+				{
+					sum = lastSumm + faktor[lastDigit];         
+					if(sum > i) {        
+						i = nextRoundNumb(i, 1) - 1;  
+						next = true;
+					}
+				}
+				if(next) {
+					next = false;
+					continue;
+				}
+				if(sum == i)
+					console.log('!!!' + i);    
+			}
+			console.log('Итераций: ' + stat);
+			console.timeEnd('test');
+		</script>
+	</head>
+	<body>
+	</body>
+</html>
