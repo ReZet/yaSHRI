@@ -1,0 +1,564 @@
+<html>
+	<head>
+		<title>HTML BG</title>
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<style>
+			* {
+				padding: 0; 
+				margin: 0;
+			}
+			
+			.page {
+				width: 960px;
+				border: 2px solid #DDD;
+				border-width: 0 2px;
+				box-shadow: 0 0 2px 0 #333;
+				margin: 0 auto;
+			}
+			
+			header {
+				height: 55px;
+				overflow: hidden;
+			}
+			
+			header .header_shadow {
+				border-bottom: 2px solid #AAAAAA;
+				box-shadow: 0 -2px 10px -2px black;
+				height: 45px;
+			}
+			
+			.main {
+				display: inline-block;
+				width: 100%;
+				position: relative;
+			}
+			
+			.m_left {
+				width: 120px;
+				float: left;
+				margin: 10px;
+				position: absolute; 
+				top: 0;
+			}
+			
+			.m_right {
+				border: 1px solid #777777;
+				float: right;
+				margin: 10px;
+				padding: 10px;
+				width: 798px;
+			}
+			
+			.quest_list li{
+				list-style: none;
+			}
+			
+			.quest_list.fixed {
+				position: fixed;
+				top: 0;
+				overflow: hidden;
+			}
+			
+			.quest_list .scroll {				
+				height: 20px;
+				width: 100%;
+				display: none;
+				cursor: pointer;
+				background: #FFF;
+				box-shadow: 0 0 2px 0px #aaa inset;
+				transition: all 0.3s linear;
+			}
+			
+			.quest_list .scroll:hover {
+				background: #F9F9F9;
+				transition: all 0.3s linear;
+			}
+			
+			.quest_list .scroll {
+				display: block;				
+			}
+			
+			.quest_list .scroll.scroll-up {
+				position: relative;
+			}
+			.quest_list .scroll.scroll-down {
+				position: absolute;
+				bottom: 0;
+			}	
+			
+			.quest_list .block_listmenu {
+				position: relative;				
+				overflow: hidden;
+			}
+			.quest_list ul{
+				position: relative;
+				top: 0;
+			}
+			.quest_list .quest_item{
+				border: 1px solid #999;
+				border-width: 1px 1px 0px 1px;
+				background: #f4f4f4;
+				width: 118px;
+				transition: all 0.3s linear;
+			}
+			
+			.quest_list .quest_item.active{
+				background: white;			
+				border-width: 1px 0px 0px 1px;
+				width: 119px;
+				transition: all 0.3s linear;
+			}
+			
+			.quest_list .quest_item:last-child{
+				border-bottom: 1px solid #999;
+			}
+			
+			.quest_list .quest_item a{
+				padding: 5px;
+				text-decoration: none;
+				color: #666;
+				display: block;
+				transition: all 0.3s linear;
+			}
+			
+			.quest_list .quest_item.active a{
+				color: #333;
+				padding-left: 10px;
+				transition: all 0.3s linear;
+			}
+			
+			.quest_list .quest_num {
+				font: bold 13px cursive;
+			}
+			
+			.quest_list .quest_descr {
+				font: italic 10px/10px sans-serif, Arial;
+				color: #AAA;
+				margin-left: 5px;
+			}
+		</style>
+		<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+		<script type="text/javascript" src="js/scrollto.js"></script>
+
+		<script>
+			function  getPageSize(){
+				var xScroll, yScroll, pageWidth, pageHeight, windowWidth, windowHeight;
+
+				if (window.innerHeight && window.scrollMaxY) {
+					xScroll = document.body.scrollWidth;
+					yScroll = window.innerHeight + window.scrollMaxY;
+				} else if (document.body.scrollHeight > document.body.offsetHeight){ // all but Explorer Mac
+					xScroll = document.body.scrollWidth;
+					yScroll = document.body.scrollHeight;
+				} else if (document.documentElement && document.documentElement.scrollHeight > document.documentElement.offsetHeight){ // Explorer 6 strict mode
+					xScroll = document.documentElement.scrollWidth;
+					yScroll = document.documentElement.scrollHeight;
+				} else { // Explorer Mac...would also work in Mozilla and Safari
+					xScroll = document.body.offsetWidth;
+					yScroll = document.body.offsetHeight;
+				}
+				
+				if (self.innerHeight) { // all except Explorer
+					windowWidth = self.innerWidth;
+					windowHeight = self.innerHeight;
+				} else if (document.documentElement && document.documentElement.clientHeight) { // Explorer 6 Strict Mode
+					windowWidth = document.documentElement.clientWidth;
+					windowHeight = document.documentElement.clientHeight;
+				} else if (document.body) { // other Explorers
+					windowWidth = document.body.clientWidth;
+					windowHeight = document.body.clientHeight;
+				}
+				
+				// for small pages with total height less then height of the viewport
+				if(yScroll < windowHeight){
+					pageHeight = windowHeight;
+				} else {
+					pageHeight = yScroll;
+				}
+				
+				// for small pages with total width less then width of the viewport
+				if(xScroll < windowWidth){
+					pageWidth = windowWidth;
+				} else {
+					pageWidth = xScroll;
+				}
+
+				return {
+					pageWidth: pageWidth, 
+					pageHeight: pageHeight,
+					windowWidth: windowWidth,
+					windowHeight:windowHeight
+				};
+			}
+			
+			function getScrollTop() {
+				var scrOfY = 0;
+				if(typeof( window.pageYOffset ) == "number") 
+					scrOfY = window.pageYOffset;				
+				else if(document.body && (document.body.scrollLeft || document.body.scrollTop))
+					scrOfY = document.body.scrollTop;
+				else if( document.documentElement && ( document.documentElement.scrollLeft || document.documentElement.scrollTop ) ) 
+					scrOfY = document.documentElement.scrollTop;
+				return scrOfY;
+			}
+			
+			
+			var fixed = false;
+			var listTop = 0;
+			var topMargin = 15;
+			var bottomMargin = 15;
+			var blockListHeight = 0;
+			var heightList = 0;
+			var listLi = {};
+			var activeIndex = 0;
+			var valScroll = 30;
+			var curTop = 0;
+			
+			$(function(){
+				
+				listTop = $('.quest_list').offset().top;
+				
+				heightList = $('.quest_list ul').height()
+				listLi = $('.quest_list li')
+				var windowHeight = getPageSize().windowHeight;
+				
+				if(heightList > (windowHeight - topMargin - bottomMargin)) {
+				
+					var newHeight = windowHeight - $('.quest_list').offset().top + getScrollTop() - bottomMargin;
+					console.log(newHeight, windowHeight, $('.quest_list').offset().top, getScrollTop());
+					$('.quest_list ul').wrap('<div class="block_listmenu"></div>');
+					$('.quest_list').prepend('<div class="scroll scroll-up">up</div>');
+					$('.quest_list').append('<div class="scroll scroll-down">down</div>');
+					
+					console.log($('.quest_list .scroll').height() * 2);
+					blockListHeight = newHeight - ($('.quest_list .scroll').height() * 2);
+					
+					$('.quest_list').css({height: newHeight, top: topMargin});
+					$('.quest_list .block_listmenu').css({height: blockListHeight});
+					curTop = 0;
+				}
+			
+				$('.quest_list .quest_item').on('click', function() {				
+					//активируем выбранный пункт
+					$(this).addClass('active').siblings().removeClass('active');
+					
+					//прокрутим к выбранному вопросу
+					var toScrolledElem = $($(this).find('a').attr('href'));
+					$('body,html').animate(
+						{scrollTop: toScrolledElem.offset().top}, 
+						{duration: 'slow', queue: false}
+					);
+					
+					$(toScrolledElem).find('input, textarea').focus();
+					
+					activeIndex = $(this).index();
+					
+					//проверим, не выходит ли за границы пункт меню
+					var topItem = $(this).position().top;
+					if((activeIndex + 1) < listLi.length) {
+						var botomItem = $(listLi[activeIndex + 1]).position().top;
+					}
+					else {
+						var botomItem = $('.quest_list').find('ul').height();
+					}
+					if(topItem <= Math.abs(curTop)) {
+						curTop = Math.abs(topItem);
+						$('.quest_list ul').animate({top: curTop * (-1)}, {duration: 'slow', queue: false});
+					}
+					else if(botomItem > blockListHeight + Math.abs(curTop)) {
+						curTop = botomItem - blockListHeight;
+						$('.quest_list ul').animate({top: curTop * (-1)}, {duration: 'slow', queue: false});
+					}
+					
+					return false;
+				});
+				
+				$(window).scroll(function() {					
+					var windowScrollTop = getScrollTop();
+					if((windowScrollTop + topMargin) > listTop)
+					{
+						if(!fixed) {
+							$('.quest_list').addClass('fixed').css({});
+							fixed = true;
+						}
+					}
+					else {
+						if(fixed) {
+							$('.quest_list').removeClass('fixed');
+							fixed = false;
+						}
+					}
+					
+					var windowHeight = getPageSize().windowHeight;
+					var newHeight = windowHeight - $('.quest_list').offset().top + getScrollTop() - bottomMargin;
+					blockListHeight = newHeight - ($('.quest_list .scroll').height() * 2);	
+					$('.quest_list').css({height: newHeight , top: topMargin});
+					$('.quest_list .block_listmenu').css({height: blockListHeight});
+				});
+				
+				$('.quest_list .scroll-up').on('mousedown', function(){
+					var newTop = curTop - valScroll;
+					if(newTop < 0)
+						newTop = 0;	
+					curTop = newTop;
+					$('.quest_list ul').animate({top: newTop * (-1)}, {duration: 'slow', queue: false});	
+				});
+				
+				$('.quest_list .scroll-down').on('mousedown', function(){
+					var newTop = curTop + valScroll;
+					if(newTop > (heightList - blockListHeight))
+						newTop = (heightList - blockListHeight);	
+					curTop = newTop;
+					$('.quest_list ul').animate({top: newTop * (-1)}, {duration: 'slow', queue: false});
+					
+				});
+				
+				$('.list-quest .quest textarea').on('focus', function(){
+					var newActiveQuest = $('.quest_list a.[href="#' + $(this).parents('.quest').attr('id') + '"]').parent();
+					if(!$(newActiveQuest).length)
+						return false;
+					$(newActiveQuest).addClass('active').siblings().removeClass('active');
+						
+					activeIndex = $(newActiveQuest).index();
+					
+					//проверим, не выходит ли за границы пункт меню
+					var topItem = $(newActiveQuest).position().top;
+					if((activeIndex + 1) < listLi.length) {
+						var botomItem = $(listLi[activeIndex + 1]).position().top;
+					}
+					else {
+						var botomItem = $('.quest_list').find('ul').height();
+					}
+					
+					if(topItem <= Math.abs(curTop)) {
+						curTop = Math.abs(topItem);
+						$('.quest_list ul').animate({top: curTop * (-1)}, {duration: 'slow', queue: false});
+					}
+					else if(botomItem > blockListHeight + Math.abs(curTop)) {
+						curTop = botomItem - blockListHeight;
+						$('.quest_list ul').animate({top: curTop * (-1)}, {duration: 'slow', queue: false});
+					}
+				});
+				
+				return false;			
+			});
+			
+			
+		</script>	
+	</head>
+	<body>
+		<div class="page">
+			<header id="top">
+				<div class="header_shadow">
+					шапка
+				</div>
+			</header>
+			<section class="main">
+				<section class="m_left">
+					<div class="quest_list"> 
+						<ul>
+							<li class="quest_item active">
+								<a href="#top">
+									<div class="quest_num">Введение</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_1">
+									<div class="quest_num">Вопрос №1</div>
+									<div class="quest_descr">Год рождения?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_2">
+									<div class="quest_num">Вопрос №2</div>
+									<div class="quest_descr">Где живете?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_3">
+									<div class="quest_num">Вопрос №3</div>
+									<div class="quest_descr">Где учились?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_4">
+									<div class="quest_num">Вопрос №4</div>
+									<div class="quest_descr">Когда закончили учебу?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_5">
+									<div class="quest_num">Вопрос №5</div>
+									<div class="quest_descr">Как обстоят дела с английским?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_6">
+									<div class="quest_num">Вопрос №6</div>
+									<div class="quest_descr">Что ожидаете от школы?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_7">
+									<div class="quest_num">Вопрос №7</div>
+									<div class="quest_descr">Откуда о нас узнали?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_8">
+									<div class="quest_num">Вопрос №8</div>
+									<div class="quest_descr">Сколько времени готовы потратить на ШРИ?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_9">
+									<div class="quest_num">Вопрос №9</div>
+									<div class="quest_descr">Ваш опыт разработки?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_10">
+									<div class="quest_num">Вопрос №10</div>
+									<div class="quest_descr">Расскажите о бывшей/текущей работе?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_11">
+									<div class="quest_num">Вопрос №11</div>
+									<div class="quest_descr">Какой софт используете в работе:</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_12">
+									<div class="quest_num">Вопрос №12</div>
+									<div class="quest_descr">Линукс?</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_13">
+									<div class="quest_num">Линукс?</div>
+									<div class="quest_descr">Тестовое задание №1</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_14">
+									<div class="quest_num">Вопрос №14</div>
+									<div class="quest_descr">Тестовое задание №2</div>
+								</a>
+							</li>
+							<li class="quest_item">
+								<a href="#quest_15">
+									<div class="quest_num">Вопрос №15</div>
+									<div class="quest_descr">Тестовое задание №3</div>
+								</a>
+							</li>
+						</ul>
+					</div>
+				</section>
+				<section class="m_right">					
+					<h1>Анкета второй Школы разработки интерфейсов в Москве</h1>
+					<div id="quest_0" class="descr">
+						<p>Яндекс открывает набор во вторую Школу разработки интерфейсов в Москве.</p>
+						<p>Для поступления необходимо заполнить анкету с тестовыми заданиями. Приём заявок закрывается 19 августа в 23:59 по московскому времени. По результатам теста мы пригласим в Школу 30-40</p> человек.
+						<p>Подробности о Школе читайте <a href="http://events.yandex.ru/shri/">на этой странице</a>.</p>
+					</div>
+					<div class="free_space">
+						<br>
+						<br>
+						<br>
+					</div>
+					<div class="list-quest">
+						<div id="quest_1" class="quest">
+							<div class="quest-label"><label>Год рождения.</div>
+							<div class="quest-field"><textarea name="q[1]" id="q1"></textarea></div>
+						</div>
+						<div id="quest_2" class="quest">
+							<div class="quest-label"><label>Город, в котором вы живёте.</div>
+							<div class="quest-field"><textarea name="q[2]" id="q2"></textarea></div>
+						</div>
+						<div id="quest_3" class="quest">
+							<div class="quest-label"><label>Вуз, факультет, специальность, кафедра.</div>
+							<div class="quest-field"><textarea name="q[3]" id="q3"></textarea></div>
+						</div>
+						<div id="quest_4" class="quest">
+							<div class="quest-label"><label>Год окончания вуза.</div>
+							<div class="quest-field"><textarea name="q[4]" id="q4"></textarea></div>
+						</div>
+						<div id="quest_5" class="quest">
+							<div class="quest-label"><label>Уровень владения английским языком: начальный, средний, свободное владение</div>
+							<div class="quest-field"><textarea name="q[5]" id="q5"></textarea></div>
+						</div>
+						<div id="quest_6" class="quest">
+							<div class="quest-label"><label>Чего вы ожидаете от участия в Школе?</div>
+							<div class="quest-field"><textarea name="q[6]" id="q6"></textarea></div>
+						</div>
+						<div id="quest_7" class="quest">
+							<div class="quest-label"><label>Откуда вы о нас узнали?</div>
+							<div class="quest-field"><textarea name="q[7]" id="q7"></textarea></div>
+						</div>
+						<div id="quest_8" class="quest">
+							<div class="quest-label"><label>Сколько времени вы были бы готовы уделять стажировке или работе в Яндексе?</div>
+							<div class="quest-field"><textarea name="q[8]" id="q8"></textarea></div>
+						</div>
+						<div id="quest_9" class="quest">
+							<div class="quest-label"><label>Расскажите о вашем опыте разработки. Нам будет интересно всё — как серьезный интерфейс, так и просто домашняя страничка.</div>
+							<div class="quest-field"><textarea name="q[9]" id="q9"></textarea></div>
+						</div>
+						<div id="quest_10" class="quest">
+							<div class="quest-label"><label>Если вы где-нибудь работали, расскажите, какие у вас были должностные обязанности и был ли опыт работы в команде.</div>
+							<div class="quest-field"><textarea name="q[10]" id="q10"></textarea></div>
+						</div>
+						<div id="quest_11" class="quest">
+							<div class="quest-label"><label>Перечислите, какими программными продуктами вы пользуетесь в своей работе — от редактора до специализированных утилит (Intellij Idea, Node.js, Uglify.js, GNU Make). Для каждого инструмента укажите, какие задачи вы с помощью него решаете и почему выбрали именно его.</div>
+							<div class="quest-field"><textarea name="q[11]" id="q11"></textarea></div>
+						</div>
+						<div id="quest_12" class="quest">
+							<div class="quest-label"><label>Пользуетесь ли вы командной строкой? Какими командами вы пользуетесь и какие задачи вы решаете с их помощью? С какими программами вы преимущественно или полностью взаимодействуете через интерфейс командной строки?</div>
+							<div class="quest-field"><textarea name="q[12]" id="q12"></textarea></div>
+						</div>
+						<div id="quest_13" class="quest">
+							<div class="quest-label"><label>Тестовое задание №1</label></div>
+							<div class="quest-descr">
+								<p>Напишите на JavaScript функцию, которая выводит список всех чисел, которые равны сумме факториалов своих цифр. Пример такого числа:</p>
+								<p>4! + 0! + 5! + 8! + 5! = 40585</p>
+								<p><strong>В качестве ответа на вопрос пришлите ссылку на <a href="http://jsfiddle.net/" class="b-link" target="_blank">http://jsfiddle.net/</a> с вашим кодом или на ваш репозиторий на <a href="https://github.com/" class="b-link" target="_blank">https://github.com/</a>.</strong></p>
+							</div>
+							<div class="quest-field"><textarea name="q[13]" id="q13"></textarea></div>
+						</div>
+						<div id="quest_14" class="quest">
+							<div class="quest-label"><label>Тестовое задание №2</label></div>
+							<div class="quest-descr">
+								<p>Вы — пилот грузового межгалактического корабля. Ваша работа — перевозка грузов с одной планету на другую. Грузоподъемность вашего корабля ограничена, поэтому за один рейс вы можете перевезти не более N кг полезного груза. Ваш корабль умеет сообщать свое состояние (местоположение и степень загруженности), а также летать в любую точку пространства. Каждая планета может содержать на себе груз, который можно взять. Также на каждой планете груз можно оставить .</p>
+								<p><strong>Задание</strong></p>
+								<p><strong>Даны незавершенные интерфейсы корабля и планеты. Напишите недостающий код.</strong></p>
+								<p><strong>Полное условие задачи доступно на</strong></p>
+								<p><strong><a href="https://github.com/yandex-shri/introtask-space" class="b-link" target="_blank">https://github.com/yandex-shri/introtask-space</a>.</strong></p>
+								<p><strong>В качестве ответа на вопрос пришлите ссылку на<a href="http://jsfiddle.net/" class="b-link" target="_blank">http://jsfiddle.net/</a> с вашим кодом или на ваш репозиторий на<a href="https://github.com/" class="b-link" target="_blank">https://github.com/</a>.</strong></p>
+							</div>
+							<div class="quest-field"><textarea name="q[14]" id="q14"></textarea></div>
+						</div>
+						<div id="quest_15" class="quest">
+							<div class="quest-label"><label>Тестовое задание №3</label></div>
+							<div class="quest-descr">
+								<p>Сверстайте форму-анкету с нашими заданиями для кандидатов. Страница должна работать в следующих браузерах: MSIE (8, 9, 10), Google Chrome (26, 27), Firefox (20, 21), Opera (12.15, 12.14), Яндекс.Браузер 1.5. По возможности используйте приёмы безопасной деградации CSS. Страница должна содержать интерактив, реализованный с помощью JS и jQuery. Это может быть:</p>
+								<ul>
+									<li><p><strong>проверка полноты и правильности заполнения полей (где это возможно);</strong></p></li>
+									<li><p><strong>возможность свернуть и развернуть разделы (аккордеон);</strong></p></li>
+									<li><p><strong>индикатор заполнения анкеты;</strong></p></li><li><p><strong>что-нибудь ещё.</strong></p></li>
+								</ul>
+								<p><strong>Подумайте над тем, как эти данные будут отправляться на сервер.</strong></p>
+								<p><strong>Будет плюсом, если вы сверстаете страницу, используя БЭМ.</strong></p>
+								<p><strong>Дополнительные задания</strong></p>
+								<p><strong>1. Выполните задание про форму-анкету, используя один из классических шаблонизаторов: Handlebars, mustache, Dust, Jade и т.п.</strong></p>
+								<p><strong>2. Выполните задание про форму-анкету, используя один из экзотических шаблонизаторов: XSLT, YATE, BEMHTML и т.п.</strong></p>
+								<p><strong>Разработку необходимо вести на <a href="https://github.com/" class="b-link" target="_blank">https://github.com/</a>. В качестве ответа на вопрос пришлите ссылку на проект.</strong></p>
+							</div>
+							<div class="quest-field"><textarea name="q[15]" id="q15"></textarea></div>
+						</div>
+					</div>
+				</section>
+			</section>
+			<footer></footer>
+		</div>
+	</body>
+</html>
