@@ -1,6 +1,6 @@
 # yaSHRI Школа Разработки Интерфейсов Яндекса, ответы на вопросы
-http://if-else.ru/canvas/
+http://if-else.ru/canvas/ - космос
 
 
 
-http://dk.mst-digital.ru
+// http://dk.mst-digital.ru
