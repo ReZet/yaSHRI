@@ -2,38 +2,19 @@
 	<head>
 		<title>HTML5 CANVAS</title>
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<!--[if IE]><script type="text/javascript" src="excanvas.compiled.js"></script><![endif]-->
 		<style>
 			* {padding: 0; margin: 0;}
-			#page {
-				width: 1;
-				max-width: 960px;
-				margin:0 auto;
-				height: 100%;
-			}
-			
-			#shadowbox {
-				position: relative; 
-				border: 2px solid #AAA;
-				border-width: 0 2px;
-				box-shadow: 0 0 10px -1px #777;
-				height: 100%;
-			}
-			
-			#canvas1 {
-				margin: 0px;
-			}
 		</style>
-		
 	</head>
 	<body>
-		<canvas id="canvas" style="width: 100vw;height: 100vh;display: block;"></canvas>
-		
+		<canvas id="canvas"></canvas>		
 		<script>
 			var tagCanvas = document.getElementById('canvas');
+			tagCanvas.setAttribute('width', window.innerWidth);
+			tagCanvas.setAttribute('height', window.innerHeight);
 			var cnv = tagCanvas.getContext('2d');						
-			var arPlanets = new Array();			
-			var arVessels = new Array();
+			var arPlanets = [];			
+			var arVessels = [];
 			var backPic = new Image();
 			backPic.src = 'kosmos.jpg';
 			
@@ -43,43 +24,41 @@
 				this.y = y;
 				this.cargo = cargo;
 				this.koefCargo = (space.maxCargoPlanet - this.cargo) / space.maxCargoPlanet;
-				this.round = new Array();
+				this.round = [];
 				this.free = true;
 				
 				this.draw = function() {
 					cnv.save();
 					cnv.fillStyle = 'rgba(187, 187, 255, ' + (1 - this.koefCargo) + ')';		
-					//cnv.shadowColor = 'rgba(187, 255, 187, ' + (1 - this.koefCargo) + ')';	
-					//cnv.shadowBlur = (10 - this.koefCargo * 10);
 					cnv.beginPath();					
-					cnv.arc(this.x, this.y, (10 - this.koefCargo * 10), 0, 360, false);		
+					cnv.arc(this.x, this.y, (20 - this.koefCargo * 20), 0, 360, false);		
 					cnv.fill();	
 					cnv.restore();
 				}
 				
 				this.arrived = function(vessel) {						
-					if(this.free) {
+					if (this.free) {
 						this.free = false;
-						var id = this.id;
+						let id = this.id;
 						
-						var countCargoForUnload = space.genCountCargoForUnload(vessel.getOccupiedSpace(), arPlanets[id].getFreeSpace());//сколько взять груза с корабля
+						let countCargoForUnload = space.genCountCargoForUnload(vessel.getOccupiedSpace(), arPlanets[id].getFreeSpace());
 						setTimeout(function() {
 							arPlanets[id].unloadCargoFrom(vessel, countCargoForUnload);
 							
-							var countCargoForLoad = space.genCountCargoForLoad(vessel.getFreeSpace(), arPlanets[id].getAvailableAmountOfCargo());//сколько загрузит на корабль
-							//console.log('3', countCargoForLoad, curVessel.cargo, );
+							let countCargoForLoad = space.genCountCargoForLoad(vessel.getFreeSpace(), arPlanets[id].getAvailableAmountOfCargo());
 							setTimeout(function() {
 								arPlanets[id].loadCargoTo(vessel, countCargoForLoad);
 								vessel.flyTo(space.genToMove(id));								
 								
 								arPlanets[id].free = true;
-								if(arPlanets[id].round.length > 0)
+								if (arPlanets[id].round.length > 0) {
 									arPlanets[id].arrived(arPlanets[id].round.shift());
+								}
 							}, countCargoForLoad * 50);
 						}, countCargoForUnload * 50);
 					}
 					else {
-						this.round.push(vessel);//кладем в очередь	
+						this.round.push(vessel);
 					}
 				}
 				
@@ -93,12 +72,7 @@
 				
 				this.loadCargoTo = function(vessel, cargoWeight) {			
 					this.cargo -= cargoWeight;
-					vessel.cargo += cargoWeight;
-					if(this.cargo > space.maxCargoPlanet)
-						console.log('1', this);
-					//if(Math.round((space.maxCargoPlanet - this.cargo) / space.maxCargoPlanet) > 1 || Math.round((space.maxCargoVessel - vessel.cargo) / space.maxCargoVessel) > 1)
-					//	console.log('coef-'+ this.id+'-'+vessel.id, cargoWeight, this, vessel, Math.round((space.maxCargoPlanet - this.cargo) / space.maxCargoVessel), Math.round((space.maxCargoVessel - vessel.cargo) / space.maxCargoVessel));
-						
+					vessel.cargo += cargoWeight;					
 					this.koefCargo = (space.maxCargoPlanet - this.cargo) / space.maxCargoPlanet;					
 					vessel.koefCargo = (space.maxCargoVessel - vessel.cargo) / space.maxCargoVessel;
 				}
@@ -106,16 +80,6 @@
 				this.unloadCargoFrom  = function(vessel, cargoWeight) {	
 					this.cargo += cargoWeight;
 					vessel.cargo -= cargoWeight;
-					/*if(
-						(space.maxCargoPlanet - this.cargo) / space.maxCargoPlanet > 1 || 
-						(space.maxCargoVessel - vessel.cargo) / space.maxCargoVessel > 1 ||
-						vessel.cargo < 0 ||
-						this.cargo < 0 ||
-						vessel.cargo > space.maxCargoVessel ||
-						this.cargo > space.maxCargoPlanet					
-					)
-						console.log('coef+'+ this.id+'+'+vessel.id, cargoWeight, this.koefCargo, this.cargo, vessel.cargo, vessel.koefCargo, (space.maxCargoPlanet - this.cargo) / space.maxCargoPlanet, (space.maxCargoVessel - vessel.cargo) / space.maxCargoVessel);
-					*/
 					this.koefCargo = (space.maxCargoPlanet - this.cargo) / space.maxCargoPlanet;					
 					vessel.koefCargo = (space.maxCargoVessel - vessel.cargo) / space.maxCargoVessel;
 				}
@@ -142,29 +106,32 @@
 				this.newY = this.y;
 				
 				this.draw = function() {						
-					if(this.inMove)	{
+					if (this.inMove)	{
 						var endPath = false;						
-						if(this.newX > this.oldX) {
+						if (this.newX > this.oldX) {
 							this.x = this.x + (this.newX - this.oldX) / this.speed;
-							if(this.x > this.newX)
+							if (this.x > this.newX) {
 								endPath = true;
-						}
-						else {
+							}
+						} else {
 							this.x = this.x - (this.oldX - this.newX) / this.speed;
-							if(this.x < this.newX)
+							if (this.x < this.newX) {
 								endPath = true;
+							}
 						}
-						if(this.newY > this.oldY) {
+						
+						if (this.newY > this.oldY) {
 							this.y = this.y + (this.newY - this.oldY) / this.speed;	
-							if(this.y > this.newY)
+							if (this.y > this.newY) {
 								endPath = true;
-						}
-						else {
+							}
+						} else {
 							this.y = this.y - (this.oldY - this.newY) / this.speed;
-							if(this.y < this.newY)
+							if (this.y < this.newY) {
 								endPath = true;
+							}
 						}
-						if(endPath) {
+						if (endPath) {
 							this.x = this.newX;
 							this.y = this.newY;
 							this.inMove = false;
@@ -173,8 +140,6 @@
 					}
 					cnv.save();
 					cnv.fillStyle = '#F8F4EB';	
-					//cnv.shadowColor = '#FFB';	
-					//cnv.shadowBlur = 5;
 					cnv.beginPath();						
 					cnv.arc(Math.round(this.x), Math.round(this.y), (8 - this.koefCargo * 8), 0, 360, false);					
 					cnv.fill();	
@@ -212,122 +177,124 @@
 				this.minCargoPlanet = 50;
 				this.maxCargoVessel = 500;
 				this.minCargoVessel = 100;
-				//инициализация мира
+
 				this.init = function(countPlanet, countVessel) {
-					//генерируем планеты
-					for(var i = 0; i < countPlanet; i++) 
-					{
+					for (let i = 0; i < countPlanet; i++) {
 						arPlanets[i] = new Planet(
-							i, //id
-							Math.floor(Math.random() * cnv.canvas.width), //osX
-							Math.floor(Math.random() * cnv.canvas.height), //osY
-							Math.floor(Math.random() * (this.maxCargoPlanet - this.minCargoPlanet) + this.minCargoPlanet) / 2 //cargo
+							i,
+							Math.floor(Math.random() * cnv.canvas.width),
+							Math.floor(Math.random() * cnv.canvas.height),
+							Math.floor(Math.random() * (this.maxCargoPlanet - this.minCargoPlanet) + this.minCargoPlanet) / 2
 						);		
 					}
+					for (let i = 0; i < countVessel; i++) {
+						arVessels[i] = new Vessel(i, Math.floor(Math.random() * (this.maxCargoVessel - this.minCargoVessel) + this.minCargoVessel));
+					}						
 					
-					//console.log(arPlanets);
+					setInterval(function(){
+						space.draw();
+					}, 40);
 					
-					//генерируем корабль
-					for(var i = 0; i < countVessel; i++)
-						arVessels[i] = new Vessel(i, Math.floor(Math.random() * (this.maxCargoVessel - this.minCargoVessel) + this.minCargoVessel));					
-					
-					//запускаем отрисовку
-					setInterval(function(){space.draw();}, 40);
-					
-					//говорим краблю, на какую планету сначала лететь
-					for(var i = 0; i < countVessel; i++)
+					for (let i = 0; i < countVessel; i++) {
 						arVessels[i].flyTo(this.genToMove(), 0);
+					}
 				}
 				
 				this.drawBackground = function(img, x, y, w, h, offsetX, offsetY) {
-					//console.log(arguments);
 					if (arguments.length === 1) {
 						x = y = 0;
 						w = cnv.canvas.width;
 						h = cnv.canvas.height;
 					}
 
-					// default offset is center
 					offsetX = typeof offsetX === "number" ? offsetX : 0.5;
 					offsetY = typeof offsetY === "number" ? offsetY : 0.5;
 
-					// keep bounds [0.0, 1.0]
-					if (offsetX < 0) offsetX = 0;
-					if (offsetY < 0) offsetY = 0;
-					if (offsetX > 1) offsetX = 1;
-					if (offsetY > 1) offsetY = 1;
+					if (offsetX < 0) {
+						offsetX = 0;
+					}
+					if (offsetY < 0) {
+						offsetY = 0;
+					}
+					if (offsetX > 1) {
+						offsetX = 1;
+					}
+					if (offsetY > 1) {
+						offsetY = 1;
+					}
 
 					var iw = img.width,
 						ih = img.height,
 						r = Math.min(w / iw, h / ih),
-						nw = iw * r,   // new prop. width
-						nh = ih * r,   // new prop. height
+						nw = iw * r,
+						nh = ih * r,
 						cx, cy, cw, ch, ar = 1;
 
-					// decide which gap to fill    
-					if (nw < w) ar = w / nw;                             
-					if (Math.abs(ar - 1) < 1e-14 && nh < h) ar = h / nh;  // updated
+					if (nw < w) {
+						ar = w / nw;
+					}
+					if (Math.abs(ar - 1) < 1e-14 && nh < h) {
+						ar = h / nh;
+					}
 					nw *= ar;
 					nh *= ar;
 
-					// calc source rectangle
 					cw = iw / (nw / w);
 					ch = ih / (nh / h);
 
 					cx = (iw - cw) * offsetX;
 					cy = (ih - ch) * offsetY;
 
-					// make sure source rectangle is valid
-					if (cx < 0) cx = 0;
-					if (cy < 0) cy = 0;
-					if (cw > iw) cw = iw;
-					if (ch > ih) ch = ih;
+					if (cx < 0) {
+						cx = 0;
+					}
+					if (cy < 0) {
+						cy = 0;
+					}
+					if (cw > iw) {
+						cw = iw;
+					}
+					if (ch > ih) {
+						ch = ih;
+					}
 
-					// fill image in dest. rectangle
 					cnv.drawImage(img, cx, cy, cw, ch,  x, y, w, h);
 				}
 				
-				//отрисовывем всё
-				this.draw = function() {	
-					
+				this.draw = function() {					
 					cnv.globalAlpha = 0.2;
-					console.log(cnv);
 					this.drawBackground(backPic, 0, 0, cnv.canvas.width, cnv.canvas.height);
 					cnv.globalAlpha = 1;
-
-					//cnv.clearRect(0, 0, tagCanvas.offsetWidth, tagCanvas.offsetHeight);
-					/*var radgrad = cnv.createRadialGradient((tagCanvas.offsetWidth / 2), (tagCanvas.offsetHeight / 2), 20, tagCanvas.offsetWidth / 2, tagCanvas.offsetHeight / 2, tagCanvas.offsetWidth / 2);					
-					radgrad.addColorStop(0, "rgba(50, 50, 70, 0.2)");  
-					radgrad.addColorStop(1, "rgba(0, 0, 0, 0.2)"); 
-					cnv.fillStyle = radgrad;
 					
-					//cnv.fillStyle = 'rgba(0,0,0,0.1)';
-					cnv.fillRect(0, 0, tagCanvas.offsetWidth, tagCanvas.offsetHeight);*/
 					cnv.fill();					
 					var cPlanet = arPlanets.length;
-					for(var i = 0; i < cPlanet; i++)
+					for (let i = 0; i < cPlanet; i++) {
 						arPlanets[i].draw();
+					}
 						
 					var cVessel = arVessels.length;
-					for(var i = 0; i < cVessel; i++)	
-						arVessels[i].draw();					
+					for (let i = 0; i < cVessel; i++) {
+						arVessels[i].draw();				
+					}
 				}
 				
 				this.genToMove = function(curPlanet) {
-					var newPlanet = Math.floor(Math.random() * arPlanets.length);
-					if(curPlanet >= 0)
-						while(curPlanet == newPlanet)
+					let newPlanet = Math.floor(Math.random() * arPlanets.length);
+					if (curPlanet >= 0) {
+						while (curPlanet == newPlanet) {
 							newPlanet = Math.floor(Math.random() * arPlanets.length);
+						}
+					}
 						
 					return newPlanet;
 				}
 				
 				this.genCountCargoForUnload = function(availableCargoVessel, freeSpacePlanet) {
-					return Math.floor(Math.random() * ((availableCargoVessel < freeSpacePlanet)?availableCargoVessel:freeSpacePlanet));
+					return Math.floor(Math.random() * ((availableCargoVessel < freeSpacePlanet) ? availableCargoVessel : freeSpacePlanet));
 				}
 				
 				this.genCountCargoForLoad = function(freeSpaceVessel, availableCargoPlanet) {
-					return Math.floor(Math.random() * ((freeSpaceVessel < availableCargoPlanet)?freeSpaceVessel:availableCargoPlanet));
+					return Math.floor(Math.random() * ((freeSpaceVessel < availableCargoPlanet) ? freeSpaceVessel : availableCargoPlanet));
 				}
 			}
 			
